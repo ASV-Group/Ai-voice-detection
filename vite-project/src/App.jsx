@@ -84,7 +84,7 @@ export default function ProxyPhoneVoiceDetector() {
     setResult(null);
   };
 
-  // FILE UPLOAD HANDLER (STREAMS FILE IN 1-SECOND CHUNKS VIA WEBSOCKET)
+  // 1. FILE UPLOAD HANDLER (TRANSFERS THE WHOLE FILE VIA HTTP POST)
   const handleSendAudioFile = async () => {
     if (!selectedFile) {
       setError("Please select an audio file first.");
@@ -94,58 +94,85 @@ export default function ProxyPhoneVoiceDetector() {
     setError(null);
     setResult(null);
     setCallState("CONNECTED");
+    setIsProcessing(true);
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
 
     try {
-      await setupWebSocket();
-      const arrayBuffer = await selectedFile.arrayBuffer();
-      const chunkSize = 16000 * 2; // Approx ~1 second chunk size for PCM/raw audio
-      let offset = 0;
-      let count = 0;
+      // Send the whole file directly to your FastAPI backend server
+      const response = await fetch("http://localhost:8000/api/detect-audio", {
+        method: "POST",
+        body: formData,
+      });
 
-      setIsProcessing(true);
+      if (!response.ok) {
+        throw new Error(`Server status: ${response.status}`);
+      }
 
-      const streamInterval = setInterval(() => {
-        if (offset < arrayBuffer.byteLength && socketRef.current?.readyState === WebSocket.OPEN) {
-          const chunk = arrayBuffer.slice(offset, offset + chunkSize);
-          socketRef.current.send(chunk);
-          offset += chunkSize;
-          count += 1;
-          setActiveChunkCount(count);
+      const data = await response.json();
 
-          if (count % 5 === 0) {
-            setIsProcessing(true);
-          }
-        } else {
-          clearInterval(streamInterval);
-        }
-      }, 1000); // Sends a chunk every 1 second
+      setIsProcessing(false);
+      setResult({
+        verdict: data.verdict, // "AI_CLONE" or "HUMAN"
+        ai_probability: data.ai_probability,
+        human_probability: data.human_probability,
+        timestamp: new Date().toLocaleTimeString(),
+      });
     } catch (err) {
-      console.error(err);
-      setError("Failed to stream audio file to backend.");
+      console.error("Audio Upload Error:", err);
+      setIsProcessing(false);
+      setError("Failed to upload audio file to server.");
     }
   };
 
-  // 1-SECOND WEBSOCKET CONTINUOUS MIC STREAMING ENGINE
+  // 2. LIVE CALL ENGINE (STREAMS 16KHz AUDIO CHUNKS OVER WEBSOCKET)
   const start1SecContinuousStream = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Request audio stream forced to 16000Hz (16kHz) sample rate
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
+
       chunkCounterRef.current = 0;
 
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      // Use PCM/Audio WebM container at 16kHz
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 16000,
+      });
+
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0 && socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+          // Stream 1-second 16kHz chunk to backend over WebSocket
           socketRef.current.send(e.data);
-          
+
           chunkCounterRef.current += 1;
           setActiveChunkCount(chunkCounterRef.current);
 
+          // Trigger evaluation spinner state every 5 chunks
           if (chunkCounterRef.current % 5 === 0) {
             setIsProcessing(true);
           }
         }
       };
+
+      // Emit chunk every 1000ms (1 second)
+      mediaRecorder.start(1000);
+
+    } catch (err) {
+      console.error(err);
+      setError("Microphone permission denied or 16kHz sample rate unsupported.");
+      endCall();
+    }
+  };
 
       mediaRecorder.start(1000);
 
