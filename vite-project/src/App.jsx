@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5d9378055d046bdfa178a8c3f88082a03ee07aba
 import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 
@@ -164,6 +168,18 @@ export default function ProxyPhoneVoiceDetector() {
       };
 
       // Emit chunk every 1000ms (1 second)
+<<<<<<< HEAD
+=======
+      mediaRecorder.start(1000);
+
+    } catch (err) {
+      console.error(err);
+      setError("Microphone permission denied or 16kHz sample rate unsupported.");
+      endCall();
+    }
+  };
+
+>>>>>>> 5d9378055d046bdfa178a8c3f88082a03ee07aba
       mediaRecorder.start(1000);
 
     } catch (err) {
