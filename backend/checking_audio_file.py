@@ -1,6 +1,11 @@
 import numpy as np
 from scipy.signal import butter, sosfilt
 import noisereduce as nr
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from core.main import predict as ai_predict
+
 
 SAMPLE_RATE = 16000
 CHUNK_DURATION = 5
