@@ -24,7 +24,7 @@ from sklearn.metrics import (
 # CONFIGURATION
 # ============================================================
 
-MODEL_PATH = "./models/wav2vec2-large-xlsr-53"
+MODEL_PATH = "./models/wav2vec2-deepfake-voice-detector"
 
 TEST_DATA_PATH = "./Audio_data/for-original/for-original/testing"
 
