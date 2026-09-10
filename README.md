@@ -143,7 +143,7 @@ Records incoming audio into fixed-duration chunks and saves each chunk as `.wav`
 Install the main Python packages for the model pipeline, preprocessing, and API server:
 
 ```bash
-pip install numpy torch transformers librosa noisereduce sounddevice soundfile fastapi uvicorn python-multipart torchaudio scipy
+pip install requirements.txt
 ```
 
 ### Download the model
