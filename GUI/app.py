@@ -17,7 +17,7 @@ from audio.capture import start_capture
 # CONFIGURATION
 # ============================================================
 
-AI_THRESHOLD = 0.80          # ai_probability above this triggers alert
+AI_THRESHOLD = 0.60          # ai_probability above this triggers alert
 CONSECUTIVE_HITS_NEEDED = 2  # reduce false positives from one noisy chunk
 
 # ============================================================

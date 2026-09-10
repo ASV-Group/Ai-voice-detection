@@ -2,7 +2,8 @@ import numpy as np
 import torch
 from transformers import AutoModelForAudioClassification, AutoFeatureExtractor
 
-MODEL_DIR = "./models/wav2vec2-deepfake-voice-detector"
+# MODEL_DIR = "./models/wav2vec2-large-xlsr-53"  # path to the model directory
+MODEL_DIR = "./models/wav2vec2-deepfake-voice-detector"  # path to the model directory
 AI_INDEX = 1
 HUMAN_INDEX = 0
 
